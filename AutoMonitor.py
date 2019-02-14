@@ -17,76 +17,95 @@ from multiprocessing.dummy import Pool as ThreadPool
 import xlrd
 import openpyxl
 import traceback
+
+import pyDes
+import base64
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 ##############################################################################
-print("""
---------------------------------
-    Welcome to use tools!
-    Version : 1.2.0
-    Author : lin_xu_teng
-    E_mail : lxuteng@live.cn
---------------------------------
-""")
-print('\n')
-exetime = int(time.strftime('%Y%m%d', time.localtime(time.time())))
-if exetime > 20190101:
+
+
+def copy_right():
     print('\n')
-    print('-' * 64)
-    print('试用版本已过期，请联系作者！')
-    print('-' * 64)
+    print(u"""
+    --------------------------------
+        Welcome to use tools!
+        Author : lin_xu_teng
+        E_mail : xuteng.lin@huanuo-nsb.com
+    --------------------------------
+    """)
     print('\n')
-    input()
-    sys.exit()
+    auth_time = int(time.strftime('%Y%m%d', time.localtime(time.time())))
 
-print('''
+    self_key = 'lxtnokia'
+    self_iv = 'nokialxt'
+    main_path = os.path.split(os.path.abspath(sys.argv[0]))[0]
+    temp_license = open(os.path.join(main_path,'license')).read()
+    k = pyDes.des(self_key, mode=pyDes.CBC, IV=self_iv, pad=None, padmode=pyDes.PAD_PKCS5)
+    decryptstr = str(k.decrypt(base64.b64decode(temp_license)), encoding='utf-8').split('-')
+    try:
+        if decryptstr[3] == 'AutoMonitor':
+            if auth_time > int(decryptstr[2]):
+                print(u'试用版本已过期，请更新！')
+                os.system("pause")
+                sys.exit()
+        else:
+            print(u'license错误，请重新申请！')
+            os.system("pause")
+            sys.exit()
+    except:
+        print(u'license错误，请重新申请！')
+        os.system("pause")
+        sys.exit()
 
-update log:
+    print(u'''
+    update log:
+        2016-11-14 添加最大用户数检测通报；
+        2017-1-24 根据春节保障内容添加显示字段，方便监控时使用；
+        2017-2-8 增加部分TOP、最大用户数超过门限小区字段；
+        2017-2-9 新增自动关闭拥塞小区测量上报开关；
+        2017-2-13 监控粒度设置为 raw_monitor 时，当有符合相关条件的top小区，会在邮件主题分别使用【干扰】【拥塞】【休眠】【maxue】
+                    标识，已方便邮件查看;
+        2017-7-28 新增当同时激活多个网管指标监控时的区分标识
+        2017-9-24 兼容TL16A版本基站通报及监控；添加2017年下半年考核指标通报；
+        2017-10-16 新增零流量小区通报；
+        2017-10-18 优化程序config结构；
+        2017-11-1 raw_monitor报表中新增esrvcc切换准备失败监控报表；
+        2017-11-2 raw_monitor报表中新增VoLTE低接通小区监控报表；
+        2017-11-3 raw_monitor新增srvcc差小区、Volte低接通小区自动关闭测量功能；
+        2017-11-6 修复自动关闭测量功能log时间不准确问题；
+        2017-11-9 raw_monitor新增下行高丢包小区自动关闭测量功能；
+        2017-11-9 关闭测量功能时使用多进程并发进行，提高闭锁效率；
+        2017-11-9 设置发送邮件时段；
+        2017-11-13 更换 cellinfo 格式，使其不再受编码方式影响；
+        2017-11-14 关闭测量log增加关闭测量开始时间及结束时间；
+        2017-11-14 hour表volte低接通根据当天累计进行统计；
+        2017-11-16 volte低接通小区、srvcc切换差小区的kpi详情记录到log；
+        2017-11-21 增加关闭测量的enbid例外，在例外列表里面的基站不会执行自动关闭测量；
+        2017-11-23 休眠小区新算法，有随机接入申请但是没有RRC申请的小区；
+        2017-12-1 raw_monitor模块改进srvcc切换top小区关闭测量算法，支持 关闭srvcc切换开关、修改B2门限两种模式；
+                    关闭srvcc切换开关模式已修复当激活actGsmSrvccMeasOpt时关闭srvcc切换功能参数报错问题；
+        2017-12-9 raw_monitor模块增加小区可用率检测；
+        2017-12-9 raw_monitor模块增加volte掉话检测；
+        2017-12-25 raw_monitor模块支持volte掉话超过门限后调整B2门限，让其更快切换到2G；
+        2018-1-23 raw_monitor模块中的可以自定义启用或关闭各类监控报告；
+        2018-1-24 增加高流量小区监控通报；
+        2018-1-25 config文件结构优化；
+        2018-2-8 raw_monitor添加切换失败TOP小区监控，对满足门限小区关闭其切换测量开关；
+        2018-2-13 raw_monitor高流量小区监控，支持对满足调整基站关闭M8012测量；
+        2018-2-13 raw_monitor春节劣化小区监控，分别为低接通、高掉线小区；
+        2018-5-22 raw_monitor模块增加volte掉话率监控（当天累计，掉话率超过门限）；
+        2018-6-13 raw_monitor模块增加volte掉话率监控（当天累计，掉话率超过门限）可自动关闭测量；
+        2018-7-30 raw_monitor模块增加PHR异常导致RRC接入异常监控；
+        2018-12-26 更新软件验证方式；
 
-2016-11-14 添加最大用户数检测通报；
-2017-1-24 根据春节保障内容添加显示字段，方便监控时使用；
-2017-2-8 增加部分TOP、最大用户数超过门限小区字段；
-2017-2-9 新增自动关闭拥塞小区测量上报开关；
-2017-2-13 监控粒度设置为 raw_monitor 时，当有符合相关条件的top小区，会在邮件主题分别使用【干扰】【拥塞】【休眠】【maxue】
-            标识，已方便邮件查看;
-2017-7-28 新增当同时激活多个网管指标监控时的区分标识
-2017-9-24 兼容TL16A版本基站通报及监控；添加2017年下半年考核指标通报；
-2017-10-16 新增零流量小区通报；
-2017-10-18 优化程序config结构；
-2017-11-1 raw_monitor报表中新增esrvcc切换准备失败监控报表；
-2017-11-2 raw_monitor报表中新增VoLTE低接通小区监控报表；
-2017-11-3 raw_monitor新增srvcc差小区、Volte低接通小区自动关闭测量功能；
-2017-11-6 修复自动关闭测量功能log时间不准确问题；
-2017-11-9 raw_monitor新增下行高丢包小区自动关闭测量功能；
-2017-11-9 关闭测量功能时使用多进程并发进行，提高闭锁效率；
-2017-11-9 设置发送邮件时段；
-2017-11-13 更换 cellinfo 格式，使其不再受编码方式影响；
-2017-11-14 关闭测量log增加关闭测量开始时间及结束时间；
-2017-11-14 hour表volte低接通根据当天累计进行统计；
-2017-11-16 volte低接通小区、srvcc切换差小区的kpi详情记录到log；
-2017-11-21 增加关闭测量的enbid例外，在例外列表里面的基站不会执行自动关闭测量；
-2017-11-23 休眠小区新算法，有随机接入申请但是没有RRC申请的小区；
-2017-12-1 raw_monitor模块改进srvcc切换top小区关闭测量算法，支持 关闭srvcc切换开关、修改B2门限两种模式；
-            关闭srvcc切换开关模式已修复当激活actGsmSrvccMeasOpt时关闭srvcc切换功能参数报错问题；
-2017-12-9 raw_monitor模块增加小区可用率检测；
-2017-12-9 raw_monitor模块增加volte掉话检测；
-2017-12-25 raw_monitor模块支持volte掉话超过门限后调整B2门限，让其更快切换到2G；
-2018-1-23 raw_monitor模块中的可以自定义启用或关闭各类监控报告；
-2018-1-24 增加高流量小区监控通报；
-2018-1-25 config文件结构优化；
-2018-2-8 raw_monitor添加切换失败TOP小区监控，对满足门限小区关闭其切换测量开关；
-2018-2-13 raw_monitor高流量小区监控，支持对满足调整基站关闭M8012测量；
-2018-2-13 raw_monitor春节劣化小区监控，分别为低接通、高掉线小区；
-2018-5-22 raw_monitor模块增加volte掉话率监控（当天累计，掉话率超过门限）；
-2018-6-13 raw_monitor模块增加volte掉话率监控（当天累计，掉话率超过门限）可自动关闭测量；
-2018-7-30 raw_monitor模块增加PHR异常导致RRC接入异常监控；
-''')
 
-print('\n')
-print('-' * 36)
-print('      >>>   starting   <<<')
-print('-' * 36)
-print('\n\n')
-time.sleep(1)
+
+    ''')
+    print(u'-' * 36)
+    print(u'      >>>   starting   <<<')
+    print(u'-' * 36)
+    print(u'\n')
+    time.sleep(1)
 
 
 ###############################################################################
@@ -94,7 +113,10 @@ time.sleep(1)
 
 class Getini:
     # 获取配置文件
-    path = os.path.split(os.path.abspath(sys.argv[0]))[0]
+    copy_right()
+    path = os.path.join(
+        os.path.split(os.path.abspath(sys.argv[0]))[0],
+        '_config')
 
     def __init__(self, inifile='config.ini', inipath=path):
         self.cf = configparser.ConfigParser()
@@ -847,7 +869,7 @@ class Html:
         self.MIMEtext += '</body></html>'
 
     def write_top_cell(self, type_name):
-        top_cell_list_path = os.path.join(ini.path, 'HTML_TEMP/Top_Cell_List.xlsx')
+        top_cell_list_path = os.path.join(os.path.split(os.path.abspath(sys.argv[0]))[0], 'HTML_TEMP/Top_Cell_List.xlsx')
         if not os.path.exists(top_cell_list_path):
             workbook = openpyxl.Workbook()
             worksheet = workbook.create_sheet(type_name)
@@ -1102,12 +1124,14 @@ class Report:
         #     'w',
         #     encoding='utf-8')
         f_html = open(
-            ''.join((ini.path, '/', 'HTML_TEMP', '/', ini.title, '.html')),
+            ''.join((
+                os.path.split(os.path.abspath(sys.argv[0]))[0],
+                '/', 'HTML_TEMP', '/', ini.title, '.html')),
             'w',
             encoding='utf-8')
         f_html.write(html.MIMEtext)
         f_html.close()
-        print('>>> 数据获取完成1，已生成html报告!')
+        print('>>> 数据获取完成，已生成html报告!')
 
     def raw_monitor(self, type):
         html.head()
@@ -1457,7 +1481,9 @@ class Report:
             #     'w',
             #     encoding='utf-8')
             f_html = open(
-                ''.join((ini.path, '/', 'HTML_TEMP', '/', ini.title, '.html')),
+                ''.join((
+                    os.path.split(os.path.abspath(sys.argv[0]))[0],
+                    '/', 'HTML_TEMP', '/', ini.title, '.html')),
                 'w',
                 encoding='utf-8')
             f_html.write(html.MIMEtext)
@@ -1622,7 +1648,7 @@ class Autodisablepm:
             # 生成备份文件
             for temp_enbid in self.disabledpmmeasurement_list[kpi_type]:
                 temp_xml_path_name_bu = os.path.join(
-                    ini.path,
+                    os.path.split(os.path.abspath(sys.argv[0]))[0],
                     'CommisionTool',
                     self.cmd_xml_name_list[kpi_type]['bu'][temp_enbid]
                 )
@@ -1703,7 +1729,7 @@ class Autodisablepm:
             # 生成调整文件
             for temp_enbid in self.disabledpmmeasurement_list[kpi_type]:
                 temp_xml_path_name = os.path.join(
-                    ini.path,
+                    os.path.split(os.path.abspath(sys.argv[0]))[0],
                     'CommisionTool',
                     self.cmd_xml_name_list[kpi_type]['up'][temp_enbid]
                 )
@@ -1779,7 +1805,7 @@ class Autodisablepm:
             for temp_enbid in self.disabledpmmeasurement_list[kpi_type]:
                 # 生成备份文件
                 temp_xml_path_name_bu = os.path.join(
-                    ini.path,
+                    os.path.split(os.path.abspath(sys.argv[0]))[0],
                     'CommisionTool',
                     self.cmd_xml_name_list[kpi_type]['bu'][temp_enbid]
                 )
@@ -1829,7 +1855,7 @@ class Autodisablepm:
 
                 # 生成调整文件
                 temp_xml_path_name = os.path.join(
-                    ini.path,
+                    os.path.split(os.path.abspath(sys.argv[0]))[0],
                     'CommisionTool',
                     self.cmd_xml_name_list[kpi_type]['up'][temp_enbid]
                 )
@@ -1902,8 +1928,8 @@ class Autodisablepm:
         # 生成命令列表
         self.cmd_list = []
         # 生成BAT文件
-        self.bat_path = ''.join((ini.path, '/CommisionTool/temp/DisabeledPMMeasurement_', ini.htmlname, '.bat'))
-        self.bat_path_bu = ''.join((ini.path, '/CommisionTool/temp/EnabeledPMMeasurement_', ini.htmlname, '.bat'))
+        self.bat_path = ''.join((os.path.split(os.path.abspath(sys.argv[0]))[0], '/CommisionTool/temp/DisabeledPMMeasurement_', ini.htmlname, '.bat'))
+        self.bat_path_bu = ''.join((os.path.split(os.path.abspath(sys.argv[0]))[0], '/CommisionTool/temp/EnabeledPMMeasurement_', ini.htmlname, '.bat'))
         f_dm = open(self.bat_path, 'w')
         f_dm_bu = open(self.bat_path_bu, 'w')
         for temp_table in self.disabledpmmeasurement_list:
@@ -1967,7 +1993,7 @@ class Autodisablepm:
 
     def run_disable_pm(self):
         # 修改运行文件夹为批处理文件所在目录，并执行批处理程序；
-        os.chdir(''.join((ini.path, '/CommisionTool')))
+        os.chdir(''.join((os.path.split(os.path.abspath(sys.argv[0]))[0], '/CommisionTool')))
         # subprocess.call(self.bat_path)
         pool = ThreadPool()
         pool.map(self.run_call, self.cmd_list)
@@ -1976,7 +2002,7 @@ class Autodisablepm:
 
     def creat_log(self):
         # 读取批处理程序运行结果，并生成csv记录表
-        f_csv = ''.join((ini.path, '/HTML_TEMP/DisabeledPMMeasurementEnbList.csv'))
+        f_csv = ''.join((os.path.split(os.path.abspath(sys.argv[0]))[0], '/HTML_TEMP/DisabeledPMMeasurementEnbList.csv'))
         if not os.path.exists(f_csv):
             f_csv_new = open(f_csv, 'w')
             f_csv_new.write('日期,时间,类型,enbid,ip,关闭测量情况,关闭测量开始时间,关闭测量结束时间,调整xml,备份xml\n')
@@ -1997,7 +2023,7 @@ class Autodisablepm:
                         f_dml.write(str(self.disabledpmmeasurement_list[temp_table][temp_enbid][0]))
                         f_dml.write(',')
                         if temp_table in ['top_srvcc', 'top_volte_drop']:
-                            log_path = ''.join((ini.path,
+                            log_path = ''.join((os.path.split(os.path.abspath(sys.argv[0]))[0],
                                                 '/CommisionTool/temp/',
                                                 temp_table,
                                                 '-',
@@ -2006,7 +2032,7 @@ class Autodisablepm:
                                                 ini.htmlname,
                                                 '.log'))
                         else:
-                            log_path = ''.join((ini.path,
+                            log_path = ''.join((os.path.split(os.path.abspath(sys.argv[0]))[0],
                                                 '/CommisionTool/temp/',
                                                 temp_table,
                                                 '-',

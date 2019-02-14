@@ -16,7 +16,7 @@ print("""
 """)
 print('\n')
 exe_time = int(time.strftime('%Y%m%d', time.localtime(time.time())))
-if exe_time > 20190101:
+if exe_time > 99999999:
     print('\n')
     print('-' * 64)
     print('试用版本已过期，请联系作者！')
@@ -81,33 +81,36 @@ class Main:
         f_csv = csv.reader(f)
         with open(self.bat_path, 'w') as f_em:
             for temp_log in f_csv:
-                print(temp_log)
-                if [temp_log[0], temp_log[5]] == [self.yesterday, 'Successfully']:
-                    if temp_log[2] in ['eSRVCC切换差小区', 'Volte高掉话']:
-                        cmd_type = '-deltafile '
-                    else:
-                        cmd_type = '-parameterfile '
-                    temp_text = ''.join(('call commission.bat -ne ',
-                                         temp_log[4],
-                                         ' -pw Nemuadmin:nemuuser ',
-                                         cmd_type,
-                                         temp_log[9],
-                                         ' |tee ./temp/',
-                                         'Enble-',
-                                         self.bat_file_list[temp_log[2]][0],
-                                         '-',
-                                         temp_log[3],
-                                         '-',
-                                         self.nowtime_text,
-                                         '.log'))
-                    if temp_log[2] not in self.enabledpmmeasurement_list:
-                        self.enabledpmmeasurement_list[temp_log[2]] = []
-                        self.cmd_list[temp_log[2]] = []
-                    if [temp_log[3], temp_log[4]] not in self.enabledpmmeasurement_list[temp_log[2]]:
-                        self.enabledpmmeasurement_list[temp_log[2]].append([temp_log[3], temp_log[4]])
-                        self.cmd_list[temp_log[2]].append(temp_text)
-                        f_em.write(temp_text)
-                        f_em.write('\n')
+                try:
+                    if [temp_log[0], temp_log[5]] == [self.yesterday, 'Successfully']:
+                        if temp_log[2] in ['eSRVCC切换差小区', 'Volte高掉话']:
+                            cmd_type = '-deltafile '
+                        else:
+                            cmd_type = '-parameterfile '
+                        temp_text = ''.join(('call commission.bat -ne ',
+                                             temp_log[4],
+                                             ' -pw Nemuadmin:nemuuser ',
+                                             cmd_type,
+                                             temp_log[9],
+                                             ' |tee ./temp/',
+                                             'Enble-',
+                                             self.bat_file_list[temp_log[2]][0],
+                                             '-',
+                                             temp_log[3],
+                                             '-',
+                                             self.nowtime_text,
+                                             '.log'))
+                        if temp_log[2] not in self.enabledpmmeasurement_list:
+                            self.enabledpmmeasurement_list[temp_log[2]] = []
+                            self.cmd_list[temp_log[2]] = []
+                        if [temp_log[3], temp_log[4]] not in self.enabledpmmeasurement_list[temp_log[2]]:
+                            self.enabledpmmeasurement_list[temp_log[2]].append([temp_log[3], temp_log[4]])
+                            self.cmd_list[temp_log[2]].append(temp_text)
+                            f_em.write(temp_text)
+                            f_em.write('\n')
+                except:
+                    pass
+
         f.close()
         print('>>> 获取完成！')
 
